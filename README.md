@@ -170,6 +170,87 @@ The code loads MMS and XTTS from disk and uses `local_files_only=True` for MMS. 
 2. keep them in `models/`
 3. run synthesis locally afterward
 
+Important:
+
+- the `models/` directory is Git-ignored, so a fresh clone will not contain the model files
+- you must download or copy the models locally before running synthesis
+
+## Model Setup
+
+### 1. MMS Hungarian model
+
+Install the download dependencies and the MMS runtime:
+
+```bash
+pip install -e ".[mms,download]"
+```
+
+Download the model into the expected folder:
+
+```bash
+python scripts/download_mms_hu.py
+```
+
+This creates:
+
+```text
+models/mms-tts-hun/
+```
+
+### 2. XTTS-v2 model
+
+Install the XTTS runtime and download dependencies:
+
+```bash
+pip install -e ".[xtts,download]"
+```
+
+Download XTTS-v2 into the expected folder:
+
+```bash
+python scripts/download_xtts_v2.py
+```
+
+This creates:
+
+```text
+models/xtts-v2/
+```
+
+XTTS also needs a reference speaker audio file. The repository includes:
+
+```text
+input/xtts_reference.wav
+```
+
+### 3. Piper Hungarian models
+
+Piper is different from MMS and XTTS in this project:
+
+- the repository does not currently provide a download helper for Piper voices
+- you must place the Piper model files in `models/piper/...` yourself
+- each voice needs both the `.onnx` model and the matching `.onnx.json` config
+
+Expected examples from this project:
+
+```text
+models/piper/anna/hu/hu_HU/anna/medium/hu_HU-anna-medium.onnx
+models/piper/anna/hu/hu_HU/anna/medium/hu_HU-anna-medium.onnx.json
+models/piper/imre/hu/hu_HU/imre/medium/hu_HU-imre-medium.onnx
+models/piper/imre/hu/hu_HU/imre/medium/hu_HU-imre-medium.onnx.json
+```
+
+You also need the external `piper` binary installed and available in `PATH`, unless you pass `--piper-bin`.
+
+### 4. Quick verification
+
+After the models are in place, the easiest quick checks are:
+
+```bash
+python scripts/test_mms_hu_local.py
+python txt_to_audio.py --engine mms --input /path/to/input.txt --output output/test.mp3
+```
+
 ## Usage Examples
 
 ### 1. MMS Hungarian TTS
