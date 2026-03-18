@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import soundfile as sf
 from TTS.api import TTS
+import torch
 
 from .base import BaseTTSEngine
 
@@ -24,8 +26,12 @@ class XTTSEngine(BaseTTSEngine):
         self.tts = None
 
     def _resolve_device(self) -> str:
-        # Conservative default for Apple Silicon / Coqui.
-        # You can revisit this later if you verify another backend works well.
+        if self.device == "cpu":
+            return "cpu"
+        if self.device == "mps":
+            if not torch.backends.mps.is_available():
+                raise RuntimeError("MPS was requested but is not available.")
+            return "mps"
         return "cpu"
 
     def load(self) -> None:
@@ -62,5 +68,7 @@ class XTTSEngine(BaseTTSEngine):
             language=self.language,
         )
 
-        # XTTS-v2 commonly outputs 24 kHz
-        return 24000
+        return int(sf.info(str(output_path)).samplerate)
+
+    def close(self) -> None:
+        self.tts = None

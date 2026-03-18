@@ -50,6 +50,25 @@ def test_prepare_lines_strips_blank_lines() -> None:
     assert txt_to_audio.prepare_lines(" Kerdes? \n\n Valasz. \r\n") == ["Kerdes?", "Valasz."]
 
 
+def test_build_segment_plan_repeats_questions_and_answers() -> None:
+    lines = ["Kerdes 1", "Valasz 1", "Kerdes 2", "Valasz 2"]
+
+    segment_texts = txt_to_audio.build_segment_plan(lines, question_repeats=2, answer_repeats=3)
+
+    assert segment_texts == [
+        "Kerdes 1",
+        "Kerdes 1",
+        "Valasz 1",
+        "Valasz 1",
+        "Valasz 1",
+        "Kerdes 2",
+        "Kerdes 2",
+        "Valasz 2",
+        "Valasz 2",
+        "Valasz 2",
+    ]
+
+
 def test_read_input_text_normalizes_newlines(tmp_path: Path) -> None:
     input_path = tmp_path / "sample.txt"
     input_path.write_text("a\r\nb\rc\n", encoding="utf-8")
@@ -158,6 +177,9 @@ def test_main_generates_segments_and_writes_output(
 
     class FakeEngine:
         def load(self) -> None:
+            return None
+
+        def close(self) -> None:
             return None
 
         def synthesize_to_wav(self, text: str, output_path: Path) -> int:

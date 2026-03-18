@@ -7,7 +7,6 @@ from transformers import AutoTokenizer, VitsModel
 MODEL_DIR = Path("models/mms-tts-hun")
 
 if not MODEL_DIR.exists():
-    print('asdasd')
     raise FileNotFoundError(
         f"Local model directory not found: {MODEL_DIR}\n"
         "Run download_mms_hu.py first."

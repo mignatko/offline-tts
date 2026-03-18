@@ -23,8 +23,7 @@ text_to_speech/
 ├── scripts/
 │   ├── download_mms_hu.py           # Downloads MMS Hungarian model
 │   ├── download_xtts_v2.py          # Downloads XTTS-v2 model
-│   ├── test_mms_hu_local.py         # Simple local MMS test
-│   └── txt_to_hu_mp3_mms.py         # Older MMS-only conversion script
+│   └── test_mms_hu_local.py         # Simple local MMS test
 └── tts_engines/
     ├── base.py
     ├── mms_engine.py
@@ -230,7 +229,6 @@ python txt_to_audio.py \
 - `scripts/download_mms_hu.py`: downloads and saves `facebook/mms-tts-hun` into `models/mms-tts-hun`
 - `scripts/download_xtts_v2.py`: downloads and saves `coqui/XTTS-v2` into `models/xtts-v2`
 - `scripts/test_mms_hu_local.py`: synthesizes a short Hungarian sentence to `test_hu_local.wav`
-- `scripts/txt_to_hu_mp3_mms.py`: older MMS-specific conversion script kept alongside the newer multi-engine CLI
 
 ## What the Main Script Does
 

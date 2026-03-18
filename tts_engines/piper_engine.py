@@ -55,14 +55,19 @@ class PiperEngine(BaseTTSEngine):
         if self.noise_w_scale is not None:
             cmd += ["--noise_w", str(self.noise_w_scale)]
 
-        subprocess.run(
-            cmd,
-            input=text,
-            text=True,
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        try:
+            subprocess.run(
+                cmd,
+                input=text,
+                text=True,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as exc:
+            stderr = (exc.stderr or "").strip()
+            details = f": {stderr}" if stderr else "."
+            raise RuntimeError(f"Piper synthesis failed{details}") from exc
 
         with wave.open(str(output_path), "rb") as wav_file:
             return wav_file.getframerate()

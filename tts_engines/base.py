@@ -16,3 +16,16 @@ class BaseTTSEngine(ABC):
         Returns the sample rate.
         """
         pass
+
+    def close(self) -> None:
+        """
+        Release optional engine resources.
+        Engines that keep large models or other heavyweight handles can override this.
+        """
+
+    def __enter__(self) -> "BaseTTSEngine":
+        self.load()
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.close()

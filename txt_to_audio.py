@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
 from shutil import which
+
+from tts_engines.base import BaseTTSEngine
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -173,6 +177,16 @@ def prepare_lines(input_text: str) -> list[str]:
     return [line.strip() for line in input_text.split("\n") if line.strip()]
 
 
+def build_segment_plan(
+    lines: list[str], question_repeats: int, answer_repeats: int
+) -> list[str]:
+    segment_texts: list[str] = []
+    for idx, text in enumerate(lines, start=1):
+        repeats = question_repeats if idx % 2 == 1 else answer_repeats
+        segment_texts.extend([text] * repeats)
+    return segment_texts
+
+
 def validate_args(args: argparse.Namespace) -> None:
     if args.pause < 0:
         raise ValueError("--pause must be >= 0")
@@ -240,6 +254,15 @@ def create_engine(args):
         )
 
     raise ValueError(f"Unsupported engine: {args.engine}")
+
+
+def log_run_configuration(args: argparse.Namespace, lines: list[str], segment_texts: list[str]) -> None:
+    print_step(f"Pause between spoken items: {args.pause:.2f}s")
+    print_step(f"Question repeats: {args.question_repeats}")
+    print_step(f"Answer repeats: {args.answer_repeats}")
+    print_step(f"Speaking rate: {args.speaking_rate:.2f}")
+    print_step(f"Input text lines: {len(lines)}")
+    print_step(f"Speech segments to generate: {len(segment_texts)}")
 
 
 def generate_silence_wav(duration_seconds: float, sample_rate: int, output_path: Path) -> None:
@@ -330,6 +353,47 @@ def concat_to_mp3(parts: list[Path], output_path: Path) -> None:
         concat_list.unlink(missing_ok=True)
 
 
+def render_audio_parts(
+    engine: BaseTTSEngine,
+    segment_texts: list[str],
+    tmp_dir: Path,
+    pause: float,
+    speaking_rate: float,
+) -> list[Path]:
+    print_step("Generating first speech sample to determine sampling rate...")
+    probe_wav = tmp_dir / "probe.wav"
+    sample_rate = engine.synthesize_to_wav(segment_texts[0], probe_wav)
+    probe_wav.unlink(missing_ok=True)
+
+    silence_wav = tmp_dir / "silence.wav"
+    print_step(f"Generating silence segment ({pause:.2f}s)...")
+    generate_silence_wav(pause, sample_rate, silence_wav)
+
+    parts: list[Path] = []
+
+    print_step("Generating speech audio...")
+
+    for idx, text in enumerate(segment_texts, start=1):
+        raw_wav = tmp_dir / f"speech_raw_{idx:05d}.wav"
+        final_wav = tmp_dir / f"speech_{idx:05d}.wav"
+
+        engine.synthesize_to_wav(text, raw_wav)
+        apply_tempo_filter(raw_wav, final_wav, speaking_rate)
+
+        if raw_wav.exists():
+            raw_wav.unlink()
+
+        parts.append(final_wav)
+
+        is_last_generated_segment = idx == len(segment_texts)
+        if not is_last_generated_segment:
+            parts.append(silence_wav)
+
+        print_progress(idx, len(segment_texts), prefix="Synthesizing")
+
+    return parts
+
+
 def main() -> int:
     args = parse_args()
 
@@ -348,68 +412,30 @@ def main() -> int:
         if not lines:
             raise ValueError("Input file contains no non-empty text lines to synthesize.")
 
-        engine = create_engine(args)
-        print_step(f"Loading engine: {args.engine}")
-        engine.load()
-
-        total_output_segments = 0
-        for idx, _ in enumerate(lines, start=1):
-            is_question = idx % 2 == 1
-            total_output_segments += (
-                args.question_repeats if is_question else args.answer_repeats
-            )
-
-        print_step(f"Pause between spoken items: {args.pause:.2f}s")
-        print_step(f"Question repeats: {args.question_repeats}")
-        print_step(f"Answer repeats: {args.answer_repeats}")
-        print_step(f"Speaking rate: {args.speaking_rate:.2f}")
-        print_step(f"Input text lines: {len(lines)}")
-        print_step(f"Speech segments to generate: {total_output_segments}")
+        segment_texts = build_segment_plan(
+            lines,
+            question_repeats=args.question_repeats,
+            answer_repeats=args.answer_repeats,
+        )
+        log_run_configuration(args, lines, segment_texts)
 
         args.output.parent.mkdir(parents=True, exist_ok=True)
 
-        with tempfile.TemporaryDirectory(prefix="tts_build_") as tmp_dir_str:
-            tmp_dir = Path(tmp_dir_str)
+        engine = create_engine(args)
+        print_step(f"Loading engine: {args.engine}")
+        with closing(engine):
+            engine.load()
 
-            print_step("Generating first speech sample to determine sampling rate...")
-            probe_wav = tmp_dir / "probe.wav"
-            sample_rate = engine.synthesize_to_wav(lines[0], probe_wav)
-            probe_wav.unlink(missing_ok=True)
-
-            silence_wav = tmp_dir / "silence.wav"
-            print_step(f"Generating silence segment ({args.pause:.2f}s)...")
-            generate_silence_wav(args.pause, sample_rate, silence_wav)
-
-            parts: list[Path] = []
-            generated_segments = 0
-
-            print_step("Generating speech audio...")
-
-            for idx, text in enumerate(lines, start=1):
-                is_question = idx % 2 == 1
-                repeats = args.question_repeats if is_question else args.answer_repeats
-
-                for _ in range(repeats):
-                    generated_segments += 1
-
-                    raw_wav = tmp_dir / f"speech_raw_{generated_segments:05d}.wav"
-                    final_wav = tmp_dir / f"speech_{generated_segments:05d}.wav"
-
-                    engine.synthesize_to_wav(text, raw_wav)
-                    apply_tempo_filter(raw_wav, final_wav, args.speaking_rate)
-
-                    if raw_wav.exists():
-                        raw_wav.unlink()
-
-                    parts.append(final_wav)
-
-                    is_last_generated_segment = generated_segments == total_output_segments
-                    if not is_last_generated_segment:
-                        parts.append(silence_wav)
-
-                    print_progress(generated_segments, total_output_segments, prefix="Synthesizing")
-
-            concat_to_mp3(parts, args.output)
+            with tempfile.TemporaryDirectory(prefix="tts_build_") as tmp_dir_str:
+                tmp_dir = Path(tmp_dir_str)
+                parts = render_audio_parts(
+                    engine=engine,
+                    segment_texts=segment_texts,
+                    tmp_dir=tmp_dir,
+                    pause=args.pause,
+                    speaking_rate=args.speaking_rate,
+                )
+                concat_to_mp3(parts, args.output)
 
         elapsed = time.perf_counter() - started_at
         size_mb = args.output.stat().st_size / (1024 * 1024)
