@@ -2,6 +2,8 @@
 
 This project converts Hungarian text into MP3 files using locally stored text-to-speech models. The main goal is offline synthesis, with the downloaded models kept inside the `models/` folder so the project can run without fetching model files at runtime.
 
+> Status: work in progress. The project is already usable, but the package structure, tooling, and engine integrations are still being refined.
+
 The current implementation supports three engines:
 
 - `mms` for fully local Hugging Face MMS Hungarian TTS
@@ -112,6 +114,8 @@ The repository is configured with:
 - `ruff` for linting and import sorting
 - `mypy` for type checking
 - `pytest` for unit tests
+- `pre-commit` for local Git hooks
+- GitHub Actions for CI on pushes and pull requests
 
 Useful commands:
 
@@ -120,6 +124,20 @@ black .
 ruff check .
 mypy .
 pytest
+```
+
+Install local hooks:
+
+```bash
+pip install -e ".[dev]"
+pre-commit install
+pre-commit install --hook-type pre-push
+```
+
+Then you can run all hooks manually with:
+
+```bash
+pre-commit run --all-files
 ```
 
 ## Main Script

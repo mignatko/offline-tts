@@ -31,6 +31,7 @@ download = [
 dev = [
   "black>=24.8,<25.0",
   "mypy>=1.11,<2.0",
+  "pre-commit>=3.8,<5.0",
   "pytest>=8.3,<9.0",
   "ruff>=0.6,<0.8",
 ]
@@ -38,6 +39,7 @@ all = [
   "black>=24.8,<25.0",
   "huggingface_hub>=0.23,<1.0",
   "mypy>=1.11,<2.0",
+  "pre-commit>=3.8,<5.0",
   "pytest>=8.3,<9.0",
   "ruff>=0.6,<0.8",
   "soundfile>=0.12,<1.0",
