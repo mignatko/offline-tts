@@ -1,0 +1,102 @@
+[build-system]
+requires = ["setuptools>=69.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "offline-hungarian-tts"
+version = "0.1.0"
+description = "Offline Hungarian text-to-speech utilities using local MMS, Piper, and XTTS models."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "Myroslav Ihnatko" },
+]
+dependencies = [
+  "soundfile>=0.12,<1.0",
+]
+
+[project.optional-dependencies]
+mms = [
+  "torch>=2.2,<3.0",
+  "transformers>=4.39,<5.0",
+]
+xtts = [
+  "TTS>=0.22,<0.23",
+  "huggingface_hub>=0.23,<1.0",
+]
+download = [
+  "huggingface_hub>=0.23,<1.0",
+]
+dev = [
+  "black>=24.8,<25.0",
+  "mypy>=1.11,<2.0",
+  "pytest>=8.3,<9.0",
+  "ruff>=0.6,<0.8",
+]
+all = [
+  "black>=24.8,<25.0",
+  "huggingface_hub>=0.23,<1.0",
+  "mypy>=1.11,<2.0",
+  "pytest>=8.3,<9.0",
+  "ruff>=0.6,<0.8",
+  "soundfile>=0.12,<1.0",
+  "torch>=2.2,<3.0",
+  "transformers>=4.39,<5.0",
+  "TTS>=0.22,<0.23",
+]
+
+[project.scripts]
+txt-to-audio = "txt_to_audio:main"
+
+[tool.setuptools]
+py-modules = ["txt_to_audio"]
+
+[tool.setuptools.packages.find]
+include = ["tts_engines"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+  "E",
+  "F",
+  "I",
+  "UP",
+  "B",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+no_implicit_optional = true
+check_untyped_defs = true
+disallow_incomplete_defs = true
+pretty = true
+
+[[tool.mypy.overrides]]
+module = [
+  "TTS",
+  "TTS.*",
+  "soundfile",
+  "transformers",
+  "torch",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
