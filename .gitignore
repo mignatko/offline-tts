@@ -15,11 +15,15 @@ htmlcov/
 .venv/
 venv/
 env/
+.env.*
 
 # Build artifacts
 build/
 dist/
 *.egg-info/
+
+# Editor settings
+.vscode/
 
 # Local outputs
 output/
