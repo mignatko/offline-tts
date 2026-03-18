@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import sys
 from pathlib import Path
@@ -8,7 +9,6 @@ from types import ModuleType, SimpleNamespace
 import pytest
 
 import offline_hungarian_tts.cli as txt_to_audio
-import importlib
 
 
 def load_module(module_name: str, path: Path) -> ModuleType:
@@ -58,8 +58,12 @@ def test_download_mms_hu_main_uses_reusable_function(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     fake_transformers = ModuleType("transformers")
-    fake_transformers.AutoTokenizer = SimpleNamespace(from_pretrained=lambda *_args, **_kwargs: None)
-    fake_transformers.VitsModel = SimpleNamespace(from_pretrained=lambda *_args, **_kwargs: None)
+    fake_transformers.AutoTokenizer = SimpleNamespace(  # type: ignore[attr-defined]
+        from_pretrained=lambda *_args, **_kwargs: None
+    )
+    fake_transformers.VitsModel = SimpleNamespace(  # type: ignore[attr-defined]
+        from_pretrained=lambda *_args, **_kwargs: None
+    )
     monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
 
     module = load_module(
@@ -99,7 +103,7 @@ def test_download_xtts_v2_main_uses_reusable_function(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     fake_hf_hub = ModuleType("huggingface_hub")
-    fake_hf_hub.snapshot_download = lambda **_kwargs: None
+    fake_hf_hub.snapshot_download = lambda **_kwargs: None  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_hub)
 
     module = load_module(
@@ -161,8 +165,8 @@ def test_download_mms_hu_downloads_and_saves_to_target_dir(
             assert model_id == "facebook/mms-tts-hun"
             return FakeModel()
 
-    fake_transformers.AutoTokenizer = FakeAutoTokenizer
-    fake_transformers.VitsModel = FakeVitsModel
+    fake_transformers.AutoTokenizer = FakeAutoTokenizer  # type: ignore[attr-defined]
+    fake_transformers.VitsModel = FakeVitsModel  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
     sys.modules.pop("offline_hungarian_tts.downloads", None)
     module = importlib.import_module("offline_hungarian_tts.downloads")
@@ -184,7 +188,7 @@ def test_download_xtts_v2_downloads_snapshot(
     def fake_snapshot_download(**kwargs: object) -> None:
         captured.update(kwargs)
 
-    fake_hf_hub.snapshot_download = fake_snapshot_download
+    fake_hf_hub.snapshot_download = fake_snapshot_download  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_hub)
     sys.modules.pop("offline_hungarian_tts.downloads", None)
     module = importlib.import_module("offline_hungarian_tts.downloads")
@@ -196,5 +200,4 @@ def test_download_xtts_v2_downloads_snapshot(
     assert captured == {
         "repo_id": "coqui/XTTS-v2",
         "local_dir": target_dir,
-        "local_dir_use_symlinks": False,
     }

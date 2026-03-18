@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import soundfile as sf
-from TTS.api import TTS
 import torch
+from TTS.api import TTS
 
 from .base import BaseTTSEngine
 

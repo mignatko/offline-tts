@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import closing
 import sys
 import tempfile
 import time
+from contextlib import closing
 from pathlib import Path
 from shutil import which
 
@@ -18,14 +18,23 @@ def parse_args() -> argparse.Namespace:
         description="Convert a Hungarian Q/A text file to MP3 using local MMS or Piper."
     )
 
-    parser.add_argument("--engine", choices=["mms", "piper", "xtts"], required=True, help="TTS engine to use.")
+    parser.add_argument(
+        "--engine", choices=["mms", "piper", "xtts"], required=True, help="TTS engine to use."
+    )
     parser.add_argument("-i", "--input", required=True, type=Path, help="Input .txt file (UTF-8).")
     parser.add_argument("-o", "--output", required=True, type=Path, help="Output .mp3 file.")
     parser.add_argument(
-        "-p", "--pause", type=float, default=1.0, help="Pause duration in seconds between spoken items."
+        "-p",
+        "--pause",
+        type=float,
+        default=1.0,
+        help="Pause duration in seconds between spoken items.",
     )
     parser.add_argument(
-        "--question-repeats", type=int, default=1, help="How many times to repeat each question line."
+        "--question-repeats",
+        type=int,
+        default=1,
+        help="How many times to repeat each question line.",
     )
     parser.add_argument(
         "--answer-repeats", type=int, default=1, help="How many times to repeat each answer line."
@@ -37,7 +46,10 @@ def parse_args() -> argparse.Namespace:
         help="Approximate speaking rate multiplier applied after synthesis.",
     )
     parser.add_argument(
-        "--model-dir", type=Path, default=Path("models/mms-tts-hun"), help="Local MMS model directory."
+        "--model-dir",
+        type=Path,
+        default=Path("models/mms-tts-hun"),
+        help="Local MMS model directory.",
     )
     parser.add_argument(
         "--device", choices=["auto", "mps", "cpu"], default="auto", help="Device for MMS inference."
@@ -48,8 +60,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         help="Path to Piper .onnx.json config file. Defaults to <model>.json",
     )
-    parser.add_argument("--piper-bin", default="piper", help="Piper executable name or absolute path.")
-    parser.add_argument("--speaker", type=int, help="Optional Piper speaker id for multi-speaker voices.")
+    parser.add_argument(
+        "--piper-bin", default="piper", help="Piper executable name or absolute path."
+    )
+    parser.add_argument(
+        "--speaker", type=int, help="Optional Piper speaker id for multi-speaker voices."
+    )
     parser.add_argument("--length-scale", type=float, help="Optional Piper length scale.")
     parser.add_argument("--noise-scale", type=float, help="Optional Piper noise scale.")
     parser.add_argument("--noise-w-scale", type=float, help="Optional Piper noise width scale.")
@@ -105,7 +121,11 @@ def validate_args(args: argparse.Namespace) -> None:
     if args.engine == "piper" and not args.piper_model:
         raise ValueError("--piper-model is required when --engine piper")
 
-    if args.engine == "piper" and which(args.piper_bin) is None and not Path(args.piper_bin).exists():
+    if (
+        args.engine == "piper"
+        and which(args.piper_bin) is None
+        and not Path(args.piper_bin).exists()
+    ):
         raise RuntimeError(f"Piper executable was not found: {args.piper_bin}")
 
     if args.engine == "xtts" and not args.xtts_speaker_wav:
@@ -153,7 +173,9 @@ def create_engine(args: argparse.Namespace) -> BaseTTSEngine:
     raise ValueError(f"Unsupported engine: {args.engine}")
 
 
-def log_run_configuration(args: argparse.Namespace, lines: list[str], segment_texts: list[str]) -> None:
+def log_run_configuration(
+    args: argparse.Namespace, lines: list[str], segment_texts: list[str]
+) -> None:
     print_step(f"Pause between spoken items: {args.pause:.2f}s")
     print_step(f"Question repeats: {args.question_repeats}")
     print_step(f"Answer repeats: {args.answer_repeats}")

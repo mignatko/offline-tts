@@ -30,7 +30,6 @@ def download_xtts_v2(repo_id: str, target_dir: Path) -> Path:
     snapshot_download(
         repo_id=repo_id,
         local_dir=target_dir,
-        local_dir_use_symlinks=False,
     )
     print(f"Downloaded to: {target_dir.resolve()}")
     return target_dir

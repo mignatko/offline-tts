@@ -95,6 +95,9 @@ pretty = true
 module = [
   "TTS",
   "TTS.*",
+  "huggingface_hub",
+  "huggingface_hub.*",
+  "pytest",
   "soundfile",
   "transformers",
   "torch",

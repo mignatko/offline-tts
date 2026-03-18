@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, cast
 
 import soundfile as sf
 import torch
@@ -13,8 +14,8 @@ class MMSEngine(BaseTTSEngine):
     def __init__(self, model_dir: Path, device: str = "auto") -> None:
         self.model_dir = Path(model_dir)
         self.device = self._resolve_device(device)
-        self.tokenizer = None
-        self.model = None
+        self.tokenizer: Any | None = None
+        self.model: Any | None = None
 
     def _resolve_device(self, device_arg: str) -> str:
         if device_arg == "cpu":
@@ -36,7 +37,8 @@ class MMSEngine(BaseTTSEngine):
         self.model = VitsModel.from_pretrained(
             self.model_dir,
             local_files_only=True,
-        ).to(self.device)
+        )
+        self.model = cast(Any, self.model).to(self.device)
         self.model.eval()
 
     def synthesize_to_wav(self, text: str, output_path: Path) -> int:

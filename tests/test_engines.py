@@ -5,6 +5,7 @@ import sys
 import wave
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
+from typing import Literal
 
 import pytest
 
@@ -116,17 +117,17 @@ def test_mms_engine_load_and_synthesize_with_fake_dependencies(
             return "audio-array"
 
     class FakeWaveform:
-        def cpu(self) -> "FakeWaveform":
+        def cpu(self) -> FakeWaveform:
             return self
 
-        def float(self) -> "FakeWaveform":
+        def float(self) -> FakeWaveform:
             return self
 
         def numpy(self) -> FakeArray:
             return FakeArray()
 
     class FakeInputs(dict[str, object]):
-        def to(self, device: str) -> "FakeInputs":
+        def to(self, device: str) -> FakeInputs:
             self["device"] = device
             return self
 
@@ -142,7 +143,7 @@ def test_mms_engine_load_and_synthesize_with_fake_dependencies(
             self.loaded_to: str | None = None
             self.eval_called = False
 
-        def to(self, device: str) -> "FakeModel":
+        def to(self, device: str) -> FakeModel:
             self.loaded_to = device
             return self
 
@@ -172,16 +173,23 @@ def test_mms_engine_load_and_synthesize_with_fake_dependencies(
         def __enter__(self) -> None:
             return None
 
-        def __exit__(self, exc_type, exc, tb) -> bool:
+        def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc: BaseException | None,
+            tb: object | None,
+        ) -> Literal[False]:
             return False
 
-    fake_soundfile.write = lambda path, audio, sample_rate: writes.append(
+    fake_soundfile.write = lambda path, audio, sample_rate: writes.append(  # type: ignore[attr-defined]
         (path, audio, sample_rate)
     )
-    fake_torch.no_grad = lambda: FakeNoGrad()
-    fake_torch.backends = SimpleNamespace(mps=SimpleNamespace(is_available=lambda: False))
-    fake_transformers.AutoTokenizer = FakeAutoTokenizer
-    fake_transformers.VitsModel = FakeVitsModel
+    fake_torch.no_grad = lambda: FakeNoGrad()  # type: ignore[attr-defined]
+    fake_torch.backends = SimpleNamespace(  # type: ignore[attr-defined]
+        mps=SimpleNamespace(is_available=lambda: False)
+    )
+    fake_transformers.AutoTokenizer = FakeAutoTokenizer  # type: ignore[attr-defined]
+    fake_transformers.VitsModel = FakeVitsModel  # type: ignore[attr-defined]
 
     monkeypatch.setitem(sys.modules, "soundfile", fake_soundfile)
     monkeypatch.setitem(sys.modules, "torch", fake_torch)
@@ -220,13 +228,11 @@ def test_xtts_engine_load_and_synthesize_with_fake_dependencies(
                 "gpu": gpu,
             }
 
-        def to(self, device: str) -> "FakeTTS":
+        def to(self, device: str) -> FakeTTS:
             captured["device"] = device
             return self
 
-        def tts_to_file(
-            self, text: str, file_path: str, speaker_wav: str, language: str
-        ) -> None:
+        def tts_to_file(self, text: str, file_path: str, speaker_wav: str, language: str) -> None:
             captured["tts_to_file"] = {
                 "text": text,
                 "file_path": file_path,
@@ -234,10 +240,12 @@ def test_xtts_engine_load_and_synthesize_with_fake_dependencies(
                 "language": language,
             }
 
-    fake_tts_api.TTS = FakeTTS
-    fake_tts_package.api = fake_tts_api
-    fake_soundfile.info = lambda path: SimpleNamespace(samplerate=44100)
-    fake_torch.backends = SimpleNamespace(mps=SimpleNamespace(is_available=lambda: False))
+    fake_tts_api.TTS = FakeTTS  # type: ignore[attr-defined]
+    fake_tts_package.api = fake_tts_api  # type: ignore[attr-defined]
+    fake_soundfile.info = lambda path: SimpleNamespace(samplerate=44100)  # type: ignore[attr-defined]
+    fake_torch.backends = SimpleNamespace(  # type: ignore[attr-defined]
+        mps=SimpleNamespace(is_available=lambda: False)
+    )
     monkeypatch.setitem(sys.modules, "TTS", fake_tts_package)
     monkeypatch.setitem(sys.modules, "TTS.api", fake_tts_api)
     monkeypatch.setitem(sys.modules, "soundfile", fake_soundfile)
@@ -290,14 +298,16 @@ def test_xtts_engine_respects_explicit_mps_request(
         def __init__(self, **_: object) -> None:
             return None
 
-        def to(self, device: str) -> "FakeTTS":
+        def to(self, device: str) -> FakeTTS:
             captured["device"] = device
             return self
 
-    fake_tts_api.TTS = FakeTTS
-    fake_tts_package.api = fake_tts_api
-    fake_soundfile.info = lambda path: SimpleNamespace(samplerate=24000)
-    fake_torch.backends = SimpleNamespace(mps=SimpleNamespace(is_available=lambda: True))
+    fake_tts_api.TTS = FakeTTS  # type: ignore[attr-defined]
+    fake_tts_package.api = fake_tts_api  # type: ignore[attr-defined]
+    fake_soundfile.info = lambda path: SimpleNamespace(samplerate=24000)  # type: ignore[attr-defined]
+    fake_torch.backends = SimpleNamespace(  # type: ignore[attr-defined]
+        mps=SimpleNamespace(is_available=lambda: True)
+    )
     monkeypatch.setitem(sys.modules, "TTS", fake_tts_package)
     monkeypatch.setitem(sys.modules, "TTS.api", fake_tts_api)
     monkeypatch.setitem(sys.modules, "soundfile", fake_soundfile)

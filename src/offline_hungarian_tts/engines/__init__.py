@@ -1,7 +1,9 @@
+from typing import Any
+
 __all__ = ["MMSEngine", "PiperEngine", "XTTSEngine"]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     if name == "MMSEngine":
         from .mms_engine import MMSEngine
 

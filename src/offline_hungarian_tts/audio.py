@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 from shutil import which
 
@@ -75,7 +76,11 @@ def apply_tempo_filter(input_wav: Path, output_wav: Path, speaking_rate: float) 
     )
 
 
-def concat_to_mp3(parts: list[Path], output_path: Path, progress_callback) -> None:
+def concat_to_mp3(
+    parts: list[Path],
+    output_path: Path,
+    progress_callback: Callable[..., None],
+) -> None:
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=False) as f:
         concat_list = Path(f.name)
         for part in parts:

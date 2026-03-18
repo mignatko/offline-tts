@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -123,7 +125,7 @@ def test_apply_tempo_filter_builds_expected_ffmpeg_chain(
     speaking_rate: float,
     expected_chain: str,
 ) -> None:
-    captured: dict[str, object] = {}
+    captured: dict[str, list[str]] = {}
 
     def fake_run(cmd: list[str], **_: object) -> subprocess.CompletedProcess[str]:
         captured["cmd"] = cmd
@@ -145,7 +147,7 @@ def test_concat_to_mp3_invokes_ffmpeg_with_concat_file(
     for path in (part_a, part_b):
         path.write_bytes(b"wav")
 
-    captured: dict[str, object] = {}
+    captured: dict[str, str | list[str]] = {}
 
     def fake_run(cmd: list[str], **_: object) -> subprocess.CompletedProcess[str]:
         captured["cmd"] = cmd
@@ -156,11 +158,15 @@ def test_concat_to_mp3_invokes_ffmpeg_with_concat_file(
 
     monkeypatch.setattr(audio_utils.subprocess, "run", fake_run)
 
-    audio_utils.concat_to_mp3([part_a, part_b], output_path, progress_callback=txt_to_audio.print_progress)
+    audio_utils.concat_to_mp3(
+        [part_a, part_b], output_path, progress_callback=txt_to_audio.print_progress
+    )
 
-    assert captured["cmd"][-1] == str(output_path)
-    assert f"file '{part_a.as_posix()}'" in captured["concat_contents"]
-    assert f"file '{part_b.as_posix()}'" in captured["concat_contents"]
+    cmd = cast(list[str], captured["cmd"])
+    concat_contents = cast(str, captured["concat_contents"])
+    assert cmd[-1] == str(output_path)
+    assert f"file '{part_a.as_posix()}'" in concat_contents
+    assert f"file '{part_b.as_posix()}'" in concat_contents
 
 
 def test_main_generates_segments_and_writes_output(
@@ -199,7 +205,11 @@ def test_main_generates_segments_and_writes_output(
         output_wav.write_bytes(input_wav.read_bytes())
         input_wav.unlink()
 
-    def fake_concat(parts: list[Path], output_path: Path, progress_callback) -> None:
+    def fake_concat(
+        parts: list[Path],
+        output_path: Path,
+        progress_callback: Callable[..., None],
+    ) -> None:
         merged_parts.extend(parts)
         output_path.write_bytes(b"mp3")
 

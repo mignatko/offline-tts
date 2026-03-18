@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 from .audio import apply_tempo_filter, generate_silence_wav
@@ -10,9 +11,7 @@ def prepare_lines(input_text: str) -> list[str]:
     return [line.strip() for line in input_text.split("\n") if line.strip()]
 
 
-def build_segment_plan(
-    lines: list[str], question_repeats: int, answer_repeats: int
-) -> list[str]:
+def build_segment_plan(lines: list[str], question_repeats: int, answer_repeats: int) -> list[str]:
     segment_texts: list[str] = []
     for idx, text in enumerate(lines, start=1):
         repeats = question_repeats if idx % 2 == 1 else answer_repeats
@@ -26,8 +25,8 @@ def render_audio_parts(
     tmp_dir: Path,
     pause: float,
     speaking_rate: float,
-    info_callback,
-    progress_callback,
+    info_callback: Callable[[str], None],
+    progress_callback: Callable[..., None],
 ) -> list[Path]:
     info_callback("Generating first speech sample to determine sampling rate...")
     probe_wav = tmp_dir / "probe.wav"
