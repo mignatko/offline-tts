@@ -12,7 +12,7 @@ The current implementation supports three engines:
 
 ```text
 text_to_speech/
-├── txt_to_audio.py                  # Main CLI entrypoint
+├── txt_to_audio.py                  # Backward-compatible wrapper for the package CLI
 ├── input/                           # Input text and reference audio samples
 ├── models/
 │   ├── mms-tts-hun/                 # Local MMS Hungarian model
@@ -21,14 +21,23 @@ text_to_speech/
 │   │   └── imre/hu/...              # Local Piper Hungarian voice
 │   └── xtts-v2/                     # Local XTTS-v2 model files
 ├── scripts/
-│   ├── download_mms_hu.py           # Downloads MMS Hungarian model
-│   ├── download_xtts_v2.py          # Downloads XTTS-v2 model
+│   ├── download_mms_hu.py           # CLI wrapper for MMS model download
+│   ├── download_xtts_v2.py          # CLI wrapper for XTTS-v2 download
 │   └── test_mms_hu_local.py         # Simple local MMS test
-└── tts_engines/
-    ├── base.py
-    ├── mms_engine.py
-    ├── piper_engine.py
-    └── xtts_engine.py
+├── src/offline_hungarian_tts/
+│   ├── cli.py                       # Main CLI implementation
+│   ├── pipeline.py                  # Text-to-audio orchestration helpers
+│   ├── audio.py                     # ffmpeg/audio utility helpers
+│   ├── downloads.py                 # Reusable model download functions
+│   └── engines/
+│       ├── base.py
+│       ├── mms_engine.py
+│       ├── piper_engine.py
+│       └── xtts_engine.py
+└── tests/
+    ├── test_cli_and_scripts.py
+    ├── test_engines.py
+    └── test_txt_to_audio.py
 ```
 
 ## How Input Text Is Parsed

@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 
-from huggingface_hub import snapshot_download
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from offline_hungarian_tts.downloads import download_xtts_v2
 
 
 def parse_args() -> argparse.Namespace:
@@ -22,16 +25,6 @@ def parse_args() -> argparse.Namespace:
         help="Local directory where XTTS-v2 should be saved.",
     )
     return parser.parse_args()
-
-
-def download_xtts_v2(repo_id: str, target_dir: Path) -> Path:
-    snapshot_download(
-        repo_id=repo_id,
-        local_dir=target_dir,
-        local_dir_use_symlinks=False,
-    )
-    print(f"Downloaded to: {target_dir.resolve()}")
-    return target_dir
 
 
 def main() -> int:

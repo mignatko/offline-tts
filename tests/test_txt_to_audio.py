@@ -6,7 +6,9 @@ from pathlib import Path
 
 import pytest
 
-import txt_to_audio
+import offline_hungarian_tts.audio as audio_utils
+import offline_hungarian_tts.cli as txt_to_audio
+import offline_hungarian_tts.pipeline as pipeline
 
 
 def make_args(tmp_path: Path, **overrides: object) -> argparse.Namespace:
@@ -101,7 +103,7 @@ def test_apply_tempo_filter_moves_file_when_rate_is_one(tmp_path: Path) -> None:
     output_wav = tmp_path / "output.wav"
     input_wav.write_bytes(b"wav")
 
-    txt_to_audio.apply_tempo_filter(input_wav, output_wav, 1.0)
+    audio_utils.apply_tempo_filter(input_wav, output_wav, 1.0)
 
     assert not input_wav.exists()
     assert output_wav.read_bytes() == b"wav"
@@ -127,9 +129,9 @@ def test_apply_tempo_filter_builds_expected_ffmpeg_chain(
         captured["cmd"] = cmd
         return subprocess.CompletedProcess(cmd, 0)
 
-    monkeypatch.setattr(txt_to_audio.subprocess, "run", fake_run)
+    monkeypatch.setattr(audio_utils.subprocess, "run", fake_run)
 
-    txt_to_audio.apply_tempo_filter(tmp_path / "input.wav", tmp_path / "output.wav", speaking_rate)
+    audio_utils.apply_tempo_filter(tmp_path / "input.wav", tmp_path / "output.wav", speaking_rate)
 
     assert captured["cmd"][5] == expected_chain
 
@@ -152,9 +154,9 @@ def test_concat_to_mp3_invokes_ffmpeg_with_concat_file(
         output_path.write_bytes(b"mp3")
         return subprocess.CompletedProcess(cmd, 0)
 
-    monkeypatch.setattr(txt_to_audio.subprocess, "run", fake_run)
+    monkeypatch.setattr(audio_utils.subprocess, "run", fake_run)
 
-    txt_to_audio.concat_to_mp3([part_a, part_b], output_path)
+    audio_utils.concat_to_mp3([part_a, part_b], output_path, progress_callback=txt_to_audio.print_progress)
 
     assert captured["cmd"][-1] == str(output_path)
     assert f"file '{part_a.as_posix()}'" in captured["concat_contents"]
@@ -197,15 +199,15 @@ def test_main_generates_segments_and_writes_output(
         output_wav.write_bytes(input_wav.read_bytes())
         input_wav.unlink()
 
-    def fake_concat(parts: list[Path], output_path: Path) -> None:
+    def fake_concat(parts: list[Path], output_path: Path, progress_callback) -> None:
         merged_parts.extend(parts)
         output_path.write_bytes(b"mp3")
 
     monkeypatch.setattr(txt_to_audio, "parse_args", lambda: args)
     monkeypatch.setattr(txt_to_audio, "ensure_ffmpeg", lambda: None)
     monkeypatch.setattr(txt_to_audio, "create_engine", lambda actual_args: FakeEngine())
-    monkeypatch.setattr(txt_to_audio, "generate_silence_wav", fake_generate_silence)
-    monkeypatch.setattr(txt_to_audio, "apply_tempo_filter", fake_apply_tempo)
+    monkeypatch.setattr(pipeline, "generate_silence_wav", fake_generate_silence)
+    monkeypatch.setattr(pipeline, "apply_tempo_filter", fake_apply_tempo)
     monkeypatch.setattr(txt_to_audio, "concat_to_mp3", fake_concat)
 
     assert txt_to_audio.main() == 0

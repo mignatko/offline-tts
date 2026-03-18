@@ -47,13 +47,14 @@ all = [
 ]
 
 [project.scripts]
-txt-to-audio = "txt_to_audio:main"
+txt-to-audio = "offline_hungarian_tts.cli:main"
 
 [tool.setuptools]
-py-modules = ["txt_to_audio"]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-include = ["tts_engines"]
+where = ["src"]
+include = ["offline_hungarian_tts", "offline_hungarian_tts.*"]
 
 [tool.black]
 line-length = 100

@@ -7,7 +7,8 @@ from types import ModuleType, SimpleNamespace
 
 import pytest
 
-import txt_to_audio
+import offline_hungarian_tts.cli as txt_to_audio
+import importlib
 
 
 def load_module(module_name: str, path: Path) -> ModuleType:
@@ -163,11 +164,8 @@ def test_download_mms_hu_downloads_and_saves_to_target_dir(
     fake_transformers.AutoTokenizer = FakeAutoTokenizer
     fake_transformers.VitsModel = FakeVitsModel
     monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
-
-    module = load_module(
-        "download_mms_hu_download_module",
-        Path.cwd() / "scripts" / "download_mms_hu.py",
-    )
+    sys.modules.pop("offline_hungarian_tts.downloads", None)
+    module = importlib.import_module("offline_hungarian_tts.downloads")
     target_dir = tmp_path / "downloaded-model"
 
     returned_dir = module.download_mms_hu("facebook/mms-tts-hun", target_dir)
@@ -188,11 +186,8 @@ def test_download_xtts_v2_downloads_snapshot(
 
     fake_hf_hub.snapshot_download = fake_snapshot_download
     monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_hub)
-
-    module = load_module(
-        "download_xtts_v2_download_module",
-        Path.cwd() / "scripts" / "download_xtts_v2.py",
-    )
+    sys.modules.pop("offline_hungarian_tts.downloads", None)
+    module = importlib.import_module("offline_hungarian_tts.downloads")
     target_dir = tmp_path / "xtts-download"
 
     returned_dir = module.download_xtts_v2("coqui/XTTS-v2", target_dir)

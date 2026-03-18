@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 
-from transformers import AutoTokenizer, VitsModel
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from offline_hungarian_tts.downloads import download_mms_hu
 
 
 def parse_args() -> argparse.Namespace:
@@ -22,25 +25,6 @@ def parse_args() -> argparse.Namespace:
         help="Local directory where the MMS model should be saved.",
     )
     return parser.parse_args()
-
-
-def download_mms_hu(model_id: str, target_dir: Path) -> Path:
-    print(f"Downloading tokenizer: {model_id}")
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-
-    print(f"Downloading model: {model_id}")
-    model = VitsModel.from_pretrained(model_id)
-
-    target_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"Saving tokenizer to: {target_dir}")
-    tokenizer.save_pretrained(target_dir)
-
-    print(f"Saving model to: {target_dir}")
-    model.save_pretrained(target_dir)
-
-    print("Done.")
-    return target_dir
 
 
 def main() -> int:

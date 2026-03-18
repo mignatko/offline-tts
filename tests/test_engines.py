@@ -8,7 +8,7 @@ from types import ModuleType, SimpleNamespace
 
 import pytest
 
-from tts_engines.piper_engine import PiperEngine
+from offline_hungarian_tts.engines.piper_engine import PiperEngine
 
 
 def test_piper_engine_load_rejects_missing_model(tmp_path: Path) -> None:
@@ -38,7 +38,7 @@ def test_piper_engine_synthesize_to_wav_invokes_binary(
             wav_file.setframerate(22050)
             wav_file.writeframes(b"\x00\x00")
 
-    monkeypatch.setattr("tts_engines.piper_engine.subprocess.run", fake_run)
+    monkeypatch.setattr("offline_hungarian_tts.engines.piper_engine.subprocess.run", fake_run)
 
     engine = PiperEngine(
         model_path=model_path,
@@ -91,7 +91,7 @@ def test_piper_engine_raises_runtime_error_with_stderr_on_failure(
 
     import subprocess
 
-    monkeypatch.setattr("tts_engines.piper_engine.subprocess.run", fake_run)
+    monkeypatch.setattr("offline_hungarian_tts.engines.piper_engine.subprocess.run", fake_run)
 
     engine = PiperEngine(
         model_path=model_path,
@@ -186,9 +186,9 @@ def test_mms_engine_load_and_synthesize_with_fake_dependencies(
     monkeypatch.setitem(sys.modules, "soundfile", fake_soundfile)
     monkeypatch.setitem(sys.modules, "torch", fake_torch)
     monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
-    sys.modules.pop("tts_engines.mms_engine", None)
+    sys.modules.pop("offline_hungarian_tts.engines.mms_engine", None)
 
-    module = importlib.import_module("tts_engines.mms_engine")
+    module = importlib.import_module("offline_hungarian_tts.engines.mms_engine")
     engine = module.MMSEngine(model_dir=tmp_path, device="cpu")
     engine.load()
 
@@ -242,7 +242,7 @@ def test_xtts_engine_load_and_synthesize_with_fake_dependencies(
     monkeypatch.setitem(sys.modules, "TTS.api", fake_tts_api)
     monkeypatch.setitem(sys.modules, "soundfile", fake_soundfile)
     monkeypatch.setitem(sys.modules, "torch", fake_torch)
-    sys.modules.pop("tts_engines.xtts_engine", None)
+    sys.modules.pop("offline_hungarian_tts.engines.xtts_engine", None)
 
     model_dir = tmp_path / "xtts"
     model_dir.mkdir()
@@ -250,7 +250,7 @@ def test_xtts_engine_load_and_synthesize_with_fake_dependencies(
     speaker_wav = tmp_path / "speaker.wav"
     speaker_wav.write_bytes(b"wav")
 
-    module = importlib.import_module("tts_engines.xtts_engine")
+    module = importlib.import_module("offline_hungarian_tts.engines.xtts_engine")
     engine = module.XTTSEngine(
         model_dir=model_dir,
         speaker_wav=speaker_wav,
@@ -302,7 +302,7 @@ def test_xtts_engine_respects_explicit_mps_request(
     monkeypatch.setitem(sys.modules, "TTS.api", fake_tts_api)
     monkeypatch.setitem(sys.modules, "soundfile", fake_soundfile)
     monkeypatch.setitem(sys.modules, "torch", fake_torch)
-    sys.modules.pop("tts_engines.xtts_engine", None)
+    sys.modules.pop("offline_hungarian_tts.engines.xtts_engine", None)
 
     model_dir = tmp_path / "xtts"
     model_dir.mkdir()
@@ -310,7 +310,7 @@ def test_xtts_engine_respects_explicit_mps_request(
     speaker_wav = tmp_path / "speaker.wav"
     speaker_wav.write_bytes(b"wav")
 
-    module = importlib.import_module("tts_engines.xtts_engine")
+    module = importlib.import_module("offline_hungarian_tts.engines.xtts_engine")
     engine = module.XTTSEngine(
         model_dir=model_dir,
         speaker_wav=speaker_wav,
